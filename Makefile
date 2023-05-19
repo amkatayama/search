@@ -57,6 +57,8 @@ include vacuum/Make.inc
 include traffic/Make.inc
 include synth_tree/Make.inc
 include blocksworld/Make.inc
+include psvn/Make.inc
+
 
 everything: $(EVERYTHING)
 
