@@ -27,6 +27,12 @@ psvn/%.o:
 	@echo $@
 	@$(CXX) -include psvn/psvn-domain.c $(IGNOREFLAGS) -c $(CXXFLAGS) -o $@ $<
 
+
+psvn/%_domain:
+	@echo $@
+	@ $(MAKE) -s $(@:_domain=.c)
+	@ $(MAKE) -s $(@:_domain=_solver)
+
 psvn/%_solver: psvn/%.c\
 	psvn/psvn.o\
 	psvn/main.o\
