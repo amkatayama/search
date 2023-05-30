@@ -3,12 +3,7 @@
 // must look like this.
 
 #include "../utils/utils.hpp"
-#include "slidejump07.c"
 #include <cstdio>
-
-#pragma GCC diagnostic ignored "-Wunused-function"
-#pragma GCC diagnostic ignored "-Wunused-variable"
-// #pragma GCC diagnostic ignored "-Wuninitialized"
 
 
 struct PSVN {
