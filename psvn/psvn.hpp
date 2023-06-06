@@ -3,7 +3,10 @@
 // must look like this.
 
 #include "../utils/utils.hpp"
+// include abstracted C file 
 #include <cstdio>
+
+// #pragma GCC diagnostic ignored "-Wuninitialized"
 
 
 struct PSVN {
@@ -25,17 +28,47 @@ struct PSVN {
 
 	// int because we are pointing to array of operators 
 	typedef int Oper;  
-
 	static const Oper Nop = -1;
 
-    // in the PSVN initializer read the initialstate from input file 
+	// Pattern Database
+	
+
+    // PSVN constructor reads three things for three different files
+	// 1. initial state 
+	// 2. abstraction rule 
+	// 3. pattern database 
 	PSVN (FILE* in) {
 		char line[30];
 
 		while (fgets(line, sizeof(line), in) != NULL) {
+
+			fprintf(stdout, "Initial state before reading from file: ");
+			print_state(stdout, init_state);
+			fprintf(stdout, "\n");
+
             // read the string into a state 
-            read_state(line, &init_state);  
+            read_state(line, init_state); 
+
+			fprintf(stdout, "Line read from file: ");
+			fprintf(stdout, line); 
+			fprintf(stdout, "\n");
+			fprintf(stdout, "Initial state read from line: ");
+			print_state(stdout, init_state);
+			fprintf(stdout, "\n");
         }
+
+		// abst = read_abstraction_from_file( "psvn/abst12_hanoi3_5d.abst" );
+		abst = read_abstraction_from_file( ABSTFILE );
+		if ( abst == NULL ){
+        	fatal("could not read the abstraction file");
+   		}
+
+		FILE* pdb_file = fopen( PDBFILE , "r");
+		pdb = read_state_map( pdb_file );
+		if ( pdb == NULL ){
+        	fatal("could not read the abstraction file");
+   		}
+		fclose(pdb_file);
 	}
 
 	struct State {
@@ -52,6 +85,7 @@ struct PSVN {
 
 	// typedef state_t State ;
 
+
 	// Memory-intensive algs such as A* which store
 	// PackedStates instead of States.  Each time operations	
 	// are needed, the state is unpacked and operated
@@ -59,7 +93,8 @@ struct PSVN {
 	//
 	// If your state is as packed as it will get then you
 	// can simply 'typedef State PackedState'
-	typedef State PackedState;
+	typedef State PackedState;	
+
 	// struct PackedState {
 	// 	…
 
@@ -72,26 +107,53 @@ struct PSVN {
 
 	// Get the initial state.
 	State initialstate(void) const {
-		State s;
-        // initializing psvnstate 
-		s.psvn_state = init_state;
+		// State s;
+		// State abst_init;
+        // // initializing psvnstate and abstracting it 
+
+		// abstract_state( abst, init_state, &abst_init.psvn_state ); 
+		// init_state
 		
+		// return abst_init;
+
+
+		State s;
+        // initializing psvnstate and abstracting it 
+		s.psvn_state = *init_state;
+
+		fprintf(stdout, "initial state: ");
+		print_state(stdout, init_state );
+		fprintf(stdout, "\n");
+
 		return s;
 	}
 
 	// Get the heuristic.
 	Cost h(const State &s) const {
-		return 0;
+		// read pdb from pdb_file, store in file pointer
+		State abst_state;
+		// create an abstract state corresponding to the state pointer using abstraction pointed by abst pointer
+		abstract_state( abst, &s.psvn_state, &abst_state.psvn_state );
+
+		fprintf(stdout, "abstracted state: ");
+		print_state(stdout, &abst_state.psvn_state );
+		fprintf(stdout, "\n");
+		
+		// get distance of abst_state from pdb 
+		int *h;
+    	h = state_map_get( pdb, &abst_state.psvn_state );
+
+		return *h;
 	}
 
 	// Get a distance estimate.
 	Cost d(const State &s) const {
-		return 0;
+		return h(s);
 	}
 
 	// Is the given state a goal state?
 	bool isgoal(const State &s) const {
-		return is_goal(&s.psvn_state);
+		return is_goal( &s.psvn_state );
 	}
 
 	// Operators implements an vector of the applicable
@@ -105,7 +167,7 @@ struct PSVN {
 			int ruleid;
 			init_fwd_iter( &iter, &s.psvn_state );
 			while( ( ruleid = next_ruleid( &iter ) ) >= 0 ) {
-				rules.push_back(ruleid);
+				rules.push_back( ruleid );
 			}
 			
 		}
@@ -176,11 +238,22 @@ struct PSVN {
 
 	// Print the state.
 	void dumpstate(FILE *out, const State &s) const {
-		print_state(out, &s.psvn_state);
+		print_state( out, &s.psvn_state );
 	}
 
 	Cost pathcost(const std::vector<State>&, const std::vector<Oper>&);
 
 	private:
-		state_t init_state;
+		state_t* init_state;
+		state_map_t* pdb;
+		abstraction_t* abst;  // abstraction rule 
+
+	// public: 
+	// 	PSVN(state_map_t* map) : 
+	// 		pdb(map) {
+	// 			FILE* pdb_file;
+	// 			pdb_file = fopen("abs_hanoi3_5d.pdb", "r");
+	// 			pdb = read_state_map(pdb_file);
+	// 			fclose(pdb_file);
+	// 		}
 };
