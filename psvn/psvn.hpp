@@ -3,7 +3,6 @@
 // must look like this.
 
 #include "../utils/utils.hpp"
-// include abstracted C file 
 #include <cstdio>
 
 // #pragma GCC diagnostic ignored "-Wuninitialized"
@@ -38,26 +37,10 @@ struct PSVN {
 	// 2. abstraction rule 
 	// 3. pattern database 
 	PSVN (FILE* in) {
-		char line[30];
+		char line[ ] = "";
+		fscanf(in, "%[^\n]", line);
+		read_state(line, &init_state); 
 
-		while (fgets(line, sizeof(line), in) != NULL) {
-
-			fprintf(stdout, "Initial state before reading from file: ");
-			print_state(stdout, init_state);
-			fprintf(stdout, "\n");
-
-            // read the string into a state 
-            read_state(line, init_state); 
-
-			fprintf(stdout, "Line read from file: ");
-			fprintf(stdout, line); 
-			fprintf(stdout, "\n");
-			fprintf(stdout, "Initial state read from line: ");
-			print_state(stdout, init_state);
-			fprintf(stdout, "\n");
-        }
-
-		// abst = read_abstraction_from_file( "psvn/abst12_hanoi3_5d.abst" );
 		abst = read_abstraction_from_file( ABSTFILE );
 		if ( abst == NULL ){
         	fatal("could not read the abstraction file");
@@ -107,23 +90,9 @@ struct PSVN {
 
 	// Get the initial state.
 	State initialstate(void) const {
-		// State s;
-		// State abst_init;
-        // // initializing psvnstate and abstracting it 
-
-		// abstract_state( abst, init_state, &abst_init.psvn_state ); 
-		// init_state
-		
-		// return abst_init;
-
-
 		State s;
         // initializing psvnstate and abstracting it 
-		s.psvn_state = *init_state;
-
-		fprintf(stdout, "initial state: ");
-		print_state(stdout, init_state );
-		fprintf(stdout, "\n");
+		s.psvn_state = init_state;
 
 		return s;
 	}
@@ -134,10 +103,6 @@ struct PSVN {
 		State abst_state;
 		// create an abstract state corresponding to the state pointer using abstraction pointed by abst pointer
 		abstract_state( abst, &s.psvn_state, &abst_state.psvn_state );
-
-		fprintf(stdout, "abstracted state: ");
-		print_state(stdout, &abst_state.psvn_state );
-		fprintf(stdout, "\n");
 		
 		// get distance of abst_state from pdb 
 		int *h;
@@ -244,7 +209,7 @@ struct PSVN {
 	Cost pathcost(const std::vector<State>&, const std::vector<Oper>&);
 
 	private:
-		state_t* init_state;
+		state_t init_state;
 		state_map_t* pdb;
 		abstraction_t* abst;  // abstraction rule 
 
