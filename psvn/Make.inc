@@ -1,4 +1,4 @@
-psvn: psvn/psvn2c\ 
+psvn: psvn/$(DOMAIN)_domain\
 
 PSVNOBJS=\
     psvn/psvn.o
@@ -51,7 +51,7 @@ psvn/%.o:
 	@echo $@
 	@$(CXX) -include psvn/$(DOMAIN).c -DABSTFILE=\"psvn/abst_$(DOMAIN).abst\" -DPDBFILE=\"psvn/abst_$(DOMAIN).state_map\" $(IGNOREFLAGS) -c $(CXXFLAGS) -o $@ $<
 
-psvn/%_solver: psvn/$(DOMAIN).c\
+psvn/$(DOMAIN)_solver: psvn/$(DOMAIN).c\
 	psvn/psvn.o\
 	psvn/main.o\
 	utils/utils.a\
