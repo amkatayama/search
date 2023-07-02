@@ -36,47 +36,22 @@ struct PSVN {
 	// 1. initial state 
 	// 2. abstraction rule 
 	// 3. pattern database 
-	PSVN (FILE* in) {
-		char line[ ] = "";
+	PSVN (FILE* in, int argc, const char *argv[]) {
+
+		char line[5*NUMVARS];
 		fscanf(in, "%[^\n]", line);
-		read_state(line, &init_state); 
+		fprintf(stdout, "Assuming each value is less than 5 characters\n");
+		read_state(line, &init_state);
 
-		fprintf(stdout, "Initial state: ");
-		print_state(stdout, &init_state);
-		fprintf(stdout, "\n");
-
-		state_t fwd = init_state;
-
-		std::vector<int> rules;
-
-		ruleid_iterator_t fwd_iter;
-		int fwd_ruleid;
-		init_fwd_iter( &fwd_iter, &init_state);
-		fwd_ruleid = next_ruleid( &fwd_iter );
-		// while ( (fwd_ruleid = next_ruleid( &fwd_iter )) >= 0 ) {
-		// 	rules.push_back( fwd_ruleid );
-		// }
-
-		apply_fwd_rule(fwd_ruleid, &fwd, &init_state);
-
-		fprintf(stdout, "state after fwdrule %d applied: ", fwd_ruleid);
-		print_state(stdout, &init_state);
-		fprintf(stdout, "\n");
-	
-		
-		state_t bwd = init_state;
-		apply_bwd_rule(fwd_ruleid, &bwd, &init_state);
-
-		fprintf(stdout, "state after bwdrule %d applied: ", fwd_ruleid);
-		print_state(stdout, &init_state);
-		fprintf(stdout, "\n");
-
-		// print intial state 
-		// do some operator to it
-		// generate edge with the operator 
-		// print state
-		// call edge destructor (delete?)
-		// print state
+		for (int i = 0; i < argc; i++) {
+			if (strcmp(argv[i], "-abst") == 0 && i < argc - 1) {
+				ABSTFILE = argv[i+1];
+				i++;
+			} else if (strcmp(argv[i], "-pdb") == 0 && i < argc - 1) {
+				PDBFILE = argv[i+1];
+				i++;
+			}
+		}
 
 		abst = read_abstraction_from_file( ABSTFILE );
 		if ( abst == NULL ){
@@ -140,10 +115,6 @@ struct PSVN {
 		State abst_state;
 		// create an abstract state corresponding to the state pointer using abstraction pointed by abst pointer
 		abstract_state( abst, &s.psvn_state, &abst_state.psvn_state );
-
-		// fprintf(stdout, "Current state: ");
-		// print_state(stdout, &s.psvn_state);
-		// fprintf(stdout, "\n");
 		
 		// get distance of abst_state from pdb 
 		int *h;
@@ -171,14 +142,11 @@ struct PSVN {
 
 		Operators(const PSVN&, const State &s) {
 			// the direction of iterator is fixed when initialized
-			ruleid_iterator_t fwd_iter;
-			// ruleid_iterator_t bwd_iter;		
-			int fwd_ruleid;
-			// int bwd_ruleid;
-			init_fwd_iter( &fwd_iter, &s.psvn_state );
-			// init_bwd_iter( &bwd_iter, &s.psvn_state );
-			while ( (fwd_ruleid = next_ruleid( &fwd_iter )) >= 0 ) {
-				rules.push_back( fwd_ruleid );
+			ruleid_iterator_t iter;	
+			int ruleid;
+			init_fwd_iter( &iter, &s.psvn_state );
+			while ( (ruleid = next_ruleid( &iter )) >= 0 ) {
+				rules.push_back( ruleid );
 			}
 		}
 
@@ -214,20 +182,9 @@ struct PSVN {
 		// use the state passed to this constructor until
 		// after the Edge's destructor has been called!
 		Edge(const PSVN &d, State &s, Oper op) : revop(op), state(s) { 
-		// Edge(const PSVN &d, State &s, Oper op) : revop(op) { 
-
-			// state.psvn_state = s.psvn_state;
-
-			// fprintf(stdout, "Before forward rule: ");
-			// print_state(stdout, &state.psvn_state);
-			// fprintf(stdout, "\n");
+			// forcing a temporary copy 
 			state_t temp = state.psvn_state;
 			apply_fwd_rule( op, &temp, &state.psvn_state );
-
-			// fprintf(stdout, "After forward rule: ");
-			// print_state(stdout, &state.psvn_state);
-			// fprintf(stdout, "\n");
-
 			cost = get_fwd_rule_cost( op );
 		}
 
@@ -265,6 +222,9 @@ struct PSVN {
 	}
 
 	Cost pathcost(const std::vector<State>&, const std::vector<Oper>&);
+
+	const char* ABSTFILE;
+	const char* PDBFILE;
 
 	private:
 		state_t init_state;
